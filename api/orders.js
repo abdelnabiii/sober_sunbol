@@ -30,16 +30,17 @@ async function create(req, res) {
 async function list(req, res) {
   const sql = db();
   const rows = await sql`SELECT * FROM orders ORDER BY created_at DESC LIMIT 1000`;
-  return res.status(200).json({ orders: rows });
+  // bigserial ids arrive as strings; send numbers so the admin page can address them
+  return res.status(200).json({ orders: rows.map(r => ({ ...r, id: Number(r.id) })) });
 }
 
 async function update(req, res) {
-  const { id, status } = body(req);
+  const { status } = body(req), id = Number(body(req).id);
   if (!Number.isInteger(id) || !STATUSES.includes(status)) return res.status(400).json({ error: 'Invalid order or status.' });
   const sql = db();
   const rows = await sql`UPDATE orders SET status = ${status}, updated_at = now() WHERE id = ${id} RETURNING id, status, updated_at`;
   if (!rows.length) return res.status(404).json({ error: 'Order not found.' });
-  return res.status(200).json({ order: rows[0] });
+  return res.status(200).json({ order: { ...rows[0], id: Number(rows[0].id) } });
 }
 
 export default async function handler(req, res) {

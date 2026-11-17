@@ -138,8 +138,8 @@ main{max-width:1400px;margin:0 auto;padding:20px clamp(14px,3vw,32px) 60px}
   async function load(quiet) {
     try {
       const { orders: list } = await api('GET');
-      const before = new Set(orders.map(o => o.id));
-      const fresh = seen ? list.filter(o => !before.has(o.id)) : [];
+      const before = new Set(orders.map(o => Number(o.id)));
+      const fresh = seen ? list.filter(o => !before.has(Number(o.id))) : [];
       orders = list; seen = true;
       document.body.classList.add('authed'); sessionStorage.setItem(KEY, pw);
       render(new Set(fresh.map(o => o.id)));
@@ -189,7 +189,7 @@ main{max-width:1400px;margin:0 auto;padding:20px clamp(14px,3vw,32px) 60px}
   $('#chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) { filter = b.dataset.k; render(); } });
   $('#list').addEventListener('change', async e => {
     const s = e.target.closest('.st'); if (!s) return;
-    const id = +s.dataset.id, o = orders.find(x => x.id === id), prev = o.status;
+    const id = +s.dataset.id, o = orders.find(x => Number(x.id) === id); if (!o) return; const prev = o.status;
     o.status = s.value; render();
     try { await api('PATCH', { id, status: o.status }); toast(`${o.number} → ${STAT[o.status]}`); }
     catch (err) { o.status = prev; render(); if (err.message !== 'unauthorized') toast('Couldn’t update: ' + err.message); }
