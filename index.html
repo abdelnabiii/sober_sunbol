@@ -314,7 +314,7 @@ a{color:inherit;text-decoration:none}
 <div id="toast" role="status" aria-live="polite"><span class="tt"></span><a href="/checkout">Checkout →</a></div>
 
 <div id="intro">
-  <video id="iv" muted playsinline preload="auto" src="https://d8j0ntlcm91z4.cloudfront.net/user_3GuPJgHdO30A861GfajrdQdZhaa/hf_20261117_073158_a5abd813-3f4f-409a-aaa6-e094f401ef37.mp4"></video>
+  <video id="iv" muted playsinline webkit-playsinline autoplay preload="auto" disablepictureinpicture disableremoteplayback src="https://d8j0ntlcm91z4.cloudfront.net/user_3GuPJgHdO30A861GfajrdQdZhaa/hf_20261117_073158_a5abd813-3f4f-409a-aaa6-e094f401ef37.mp4#t=0.55"></video>
   <button id="skip" type="button">Skip intro</button>
   <div class="stamp" aria-hidden="true">
     <svg class="mark" viewBox="0 0 36 36"><circle class="m1" cx="18" cy="18" r="18"/><circle class="m2" cx="14" cy="21.5" r="5"/><circle class="m2" cx="22.5" cy="13" r="3.4"/><circle class="m2" cx="24" cy="23.5" r="2.2"/></svg>
@@ -1273,18 +1273,24 @@ titleEl.append(buildLayer(FL[shownFlav].name));
 resize();
 if (RM) { enter(); }
 else {
-  const startVideo = () => {
-    if (introPhase !== 'video') return;
-    try { video.currentTime = .55; } catch (_) {}
-    const p = video.play(); if (p && p.catch) p.catch(e => { if (e && e.name === 'NotAllowedError') showLogo(); });
-  };
+  // Phones (iOS Safari, data-saver Android) don't buffer a video until play() is called, so never wait
+  // for 'canplay' first: request playback straight away. The start point is in the URL (#t=0.55) and is
+  // re-applied once metadata exists, for browsers that ignore media fragments.
+  video.muted = true; video.defaultMuted = true; video.playsInline = true;
+  const seekStart = () => { if (introPhase === 'video' && video.currentTime < .5) { try { video.currentTime = .55; } catch (_) {} } };
+  if (video.readyState >= 1) seekStart(); else video.addEventListener('loadedmetadata', seekStart, { once: true });
+  const pr = video.play();
+  if (pr && pr.catch) pr.catch(e => { if (e && e.name === 'NotAllowedError') showLogo(); }); // e.g. iOS Low Power Mode blocks autoplay
   video.addEventListener('playing', () => { playStarted = true; });
   video.addEventListener('timeupdate', () => { if (video.currentTime >= 4.6) showLogo(); });
   video.addEventListener('ended', showLogo);
   video.addEventListener('error', showLogo);
-  if (video.readyState >= 3) startVideo(); else video.addEventListener('canplay', startVideo, { once: true });
-  setTimeout(() => { if (!playStarted && (video.paused || video.readyState < 2)) showLogo(); }, 3500);
-  setTimeout(enter, 9000);
+  // Not started after 3.5 s: give a phone on mobile data until 7 s while the clip is still loading.
+  const stalled = () => !playStarted && (video.error || video.networkState === 3 /* NO_SOURCE */);
+  setTimeout(() => { if (stalled()) showLogo(); }, 3500);
+  setTimeout(() => { if (!playStarted) showLogo(); }, 7000);
+  // Failsafe: never hold the visitor longer than this, even if the clip started late.
+  setTimeout(enter, 12500);
 }
 
 /* ================= frame loop ================= */
