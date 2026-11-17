@@ -11,7 +11,21 @@ The centrepiece is one real-time 3D can (Three.js 0.160 / WebGL). The can you pi
 | `index.html` | The standalone page. Fonts are inlined as base64 WOFF2, so this is the file to deploy or open. |
 | `src/index.html` | Source of the page, with font placeholders. |
 | `src/fonts/` | Self-hosted latin WOFF2 files: Archivo Black 400, Inter (variable), DM Mono 400 and 500. |
-| `build.py` | Inlines the fonts: `src/index.html` → `index.html`. |
+| `checkout.html`, `admin.html` | Checkout (`/checkout`) and order tracking (`/admin`), built the same way from `src/`. |
+| `api/orders.js` | Serverless API: place orders (public), list and update orders (admin). |
+| `api/_lib/shop.js` | Catalogue, prices (EGP), governorates and validation. The server prices every order from here. |
+| `build.py` | Inlines the fonts into every page in `src/`. |
+
+## Orders backend
+
+Orders are stored in a Neon Postgres database (project `sober-orders`, table `orders`). The Vercel project needs two environment variables:
+
+| Variable | What it is |
+| --- | --- |
+| `DATABASE_URL` | Neon connection string. |
+| `ADMIN_PASSWORD` | Password for `/admin`. |
+
+Prices: a case is 12 cans for 240 EGP, the 3 pack is 50 EGP, delivery is free and payment is cash on delivery. Change them in `api/_lib/shop.js` (the server) and in the `PRICE` constants in `src/index.html` and `src/checkout.html` (display only).
 
 ## Build and run
 

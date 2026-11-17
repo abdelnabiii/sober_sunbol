@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Checkout · Sober</title>
+<meta name="description" content="Check out your Sober prebiotic sodas. Cash on delivery across Egypt.">
+<style>
+@font-face{font-family:'Archivo Black';font-style:normal;font-weight:400;font-display:swap;src:url(__FONT_ARCHIVO__) format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;src:url(__FONT_INTER__) format('woff2')}
+@font-face{font-family:'DM Mono';font-style:normal;font-weight:400;font-display:swap;src:url(__FONT_DM400__) format('woff2')}
+@font-face{font-family:'DM Mono';font-style:normal;font-weight:500;font-display:swap;src:url(__FONT_DM500__) format('woff2')}
+:root{
+  --sheet:url("https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_3GuPJgHdO30A861GfajrdQdZhaa%2Fhf_20261117_072450_85f2c906-b9bf-468c-a9da-53609a54aeb1.png&w=2200&q=85");
+  --ink:#1c1a1f;--cream:#f0e8e0;--card:#fbf7f2;--line:rgba(28,26,31,.12);--muted:rgba(28,26,31,.6);--err:#b3261e;--ok:#3f7a52;
+  --ease:cubic-bezier(.22,.8,.24,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--cream);color:var(--ink);font:400 15px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.disp{font-family:'Archivo Black',Inter,sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:-.01em;line-height:.92}
+.mono{font-family:'DM Mono',monospace}
+.spr{background-image:var(--sheet);background-repeat:no-repeat}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px clamp(16px,4vw,42px);max-width:1240px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15.5px;letter-spacing:.06em;text-decoration:none}
+.mark{width:34px;height:34px;flex:none}
+.back{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border:1.5px solid var(--ink);border-radius:99px;text-decoration:none;font-weight:600;font-size:14px}
+.back:hover{background:var(--ink);color:var(--cream)}
+
+main{max-width:1240px;margin:0 auto;padding:8px clamp(16px,4vw,42px) 80px}
+h1{font-size:clamp(44px,7vw,84px);margin:8px 0 28px}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:28px;align-items:start}
+.panel{background:var(--card);border-radius:22px;padding:clamp(18px,3vw,30px);box-shadow:0 1px 0 rgba(28,26,31,.04)}
+.panel h2{font-size:22px;margin:0 0 18px}
+.summary{position:sticky;top:20px}
+
+/* cart lines */
+.lines{list-style:none;margin:0;padding:0}
+.line{display:grid;grid-template-columns:76px 1fr auto;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.line:first-child{padding-top:0}
+.thumb{position:relative;width:76px;height:76px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:2px}
+.thumb .c{width:22px;height:53px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.18))}
+.thumb.case .c{width:28px;height:67px}
+.thumb .x12{position:absolute;right:-6px;bottom:-6px;background:var(--ink);color:var(--cream);font:500 10.5px/1 'DM Mono',monospace;padding:4px 6px;border-radius:99px}
+.lt{min-width:0}
+.lt .n{font-weight:700;font-size:15px;margin:0 0 2px}
+.lt .d{color:var(--muted);font-size:13px;margin:0}
+.lt .u{font:400 12.5px 'DM Mono',monospace;color:var(--muted);margin:4px 0 0}
+.lr{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.lr .p{font:500 15px 'DM Mono',monospace;white-space:nowrap}
+.qty{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:99px;height:34px}
+.qty button{width:32px;height:32px;border:0;background:none;border-radius:50%;font-size:17px;line-height:1;display:grid;place-items:center}
+.qty button:hover{background:rgba(28,26,31,.07)}
+.qty span{min-width:22px;text-align:center;font:500 14px 'DM Mono',monospace}
+.rm{border:0;background:none;padding:0;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
+.rm:hover{color:var(--err)}
+.tot{margin:18px 0 0;display:grid;gap:8px}
+.tot div{display:flex;justify-content:space-between;font-size:15px}
+.tot dd,.tot dt{margin:0}
+.tot dd{font:500 15px 'DM Mono',monospace}
+.tot .free{color:var(--ok)}
+.tot .grand{border-top:1.5px solid var(--ink);padding-top:12px;margin-top:4px;font-weight:800;font-size:17px}
+.tot .grand dd{font-size:19px}
+.empty{text-align:center;padding:26px 0 8px}
+.empty p{color:var(--muted);margin:0 0 18px}
+
+/* form */
+form{display:grid;gap:16px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.f{display:grid;gap:6px;min-width:0}
+.f label{font-weight:600;font-size:13.5px}
+.f label i{font-style:normal;color:var(--muted);font-weight:400}
+.f input,.f select,.f textarea{width:100%;height:48px;padding:0 14px;border:1.5px solid rgba(28,26,31,.22);border-radius:12px;background:#fff;font-size:16px;outline:none;transition:border-color .2s,box-shadow .2s}
+.f textarea{height:84px;padding:12px 14px;resize:vertical}
+.f select{appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%231c1a1f' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 14px center;padding-right:36px}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(28,26,31,.1)}
+.f.bad input,.f.bad select,.f.bad textarea{border-color:var(--err)}
+.f .er{color:var(--err);font-size:13px;margin:0;min-height:0}
+.f .er:empty{display:none}
+.pay{display:flex;gap:14px;align-items:center;padding:14px 16px;border:1.5px solid var(--ink);border-radius:14px;background:#fff}
+.pay .dot{width:20px;height:20px;border-radius:50%;border:6px solid var(--ink);flex:none}
+.pay b{display:block;font-size:15px}
+.pay span{color:var(--muted);font-size:13px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.place{height:56px;border:0;border-radius:99px;background:var(--ink);color:var(--cream);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:12px;transition:opacity .2s,transform .15s}
+.place:hover{transform:translateY(-1px)}
+.place:disabled{opacity:.45;cursor:default;transform:none}
+.place .mono{opacity:.75;font-weight:500}
+.ferr{background:#fbe3e1;color:var(--err);border-radius:12px;padding:12px 14px;font-size:14px;margin:0}
+.ferr:empty{display:none}
+.fine{color:var(--muted);font-size:12.5px;margin:0;text-align:center}
+
+/* confirmation */
+.done{display:none;max-width:640px;margin:0 auto;text-align:center}
+.done .tick{width:72px;height:72px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;margin:10px auto 22px}
+.done .tick svg{width:34px;height:34px}
+.done h1{margin-bottom:14px}
+.done .num{display:inline-block;font:500 15px 'DM Mono',monospace;background:var(--ink);color:var(--cream);padding:7px 14px;border-radius:99px;margin:0 0 18px}
+.done p{color:var(--muted);margin:0 0 8px}
+.done .panel{text-align:left;margin:26px 0}
+.done .panel p{color:inherit;margin:0}
+.done .panel .u{color:var(--muted);margin-top:4px}
+.done .shop{display:inline-flex;height:52px;align-items:center;padding:0 28px;border-radius:99px;background:var(--ink);color:var(--cream);font-weight:700;text-decoration:none}
+body.ok .co{display:none}
+body.ok .done{display:block}
+
+@media (max-width:860px){
+  .grid{grid-template-columns:1fr}
+  .summary{position:static;order:-1}
+}
+@media (max-width:480px){
+  .row{grid-template-columns:1fr}
+  .line{grid-template-columns:64px 1fr auto;gap:12px}
+  .thumb{width:64px;height:64px}
+  .thumb .c{width:18px;height:43px}
+  .thumb.case .c{width:24px;height:57px}
+  .back span{display:none}
+  .back{width:38px;padding:0;justify-content:center}
+}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/" aria-label="Sober home">
+    <svg class="mark" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="18" fill="#1c1a1f"/><circle cx="14" cy="21.5" r="5" fill="#f0e8e0"/><circle cx="22.5" cy="13" r="3.4" fill="#f0e8e0"/><circle cx="24" cy="23.5" r="2.2" fill="#f0e8e0"/></svg>
+    SOBER
+  </a>
+  <a class="back" href="/#shop" aria-label="Back to shop"><svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 9H3"/><path d="M8 4L3 9l5 5"/></svg><span>Back to shop</span></a>
+</header>
+
+<main>
+  <div class="co">
+    <h1 class="disp">Checkout</h1>
+    <div class="grid">
+      <section class="panel" aria-labelledby="dh">
+        <h2 class="disp" id="dh">Delivery details</h2>
+        <form id="form" novalidate>
+          <div class="f" data-f="name"><label for="name">Full name</label><input id="name" name="name" autocomplete="name" required><p class="er"></p></div>
+          <div class="row">
+            <div class="f" data-f="phone"><label for="phone">Mobile number</label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="010 1234 5678" required><p class="er"></p></div>
+            <div class="f" data-f="email"><label for="email">Email <i>(optional)</i></label><input id="email" name="email" type="email" autocomplete="email"><p class="er"></p></div>
+          </div>
+          <div class="row">
+            <div class="f" data-f="governorate"><label for="governorate">Governorate</label><select id="governorate" name="governorate" autocomplete="address-level1" required><option value="">Choose…</option></select><p class="er"></p></div>
+            <div class="f" data-f="city"><label for="city">City / area</label><input id="city" name="city" autocomplete="address-level2" placeholder="e.g. Maadi" required><p class="er"></p></div>
+          </div>
+          <div class="f" data-f="address"><label for="address">Street address</label><input id="address" name="address" autocomplete="street-address" placeholder="Street, building, floor, apartment" required><p class="er"></p></div>
+          <div class="f" data-f="notes"><label for="notes">Delivery notes <i>(optional)</i></label><textarea id="notes" name="notes" placeholder="Landmark, best time to call…"></textarea><p class="er"></p></div>
+          <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="f"><span style="font-weight:600;font-size:13.5px">Payment</span>
+            <div class="pay"><span class="dot" aria-hidden="true"></span><div><b>Cash on delivery</b><span>Pay when your order arrives.</span></div></div>
+          </div>
+          <p class="ferr" id="ferr" role="alert"></p>
+          <button class="place" id="place" type="submit"><span class="pl">Place order</span><span class="mono" id="placeTotal"></span></button>
+          <p class="fine">We'll call you to confirm before delivery.</p>
+        </form>
+      </section>
+
+      <aside class="panel summary" aria-labelledby="sh">
+        <h2 class="disp" id="sh">Your order</h2>
+        <ul class="lines" id="lines"></ul>
+        <div class="empty" id="empty" hidden>
+          <p>Your cart is empty.</p>
+          <a class="back" href="/#shop">Browse flavours</a>
+        </div>
+        <dl class="tot" id="tot">
+          <div><dt>Subtotal</dt><dd id="sub"></dd></div>
+          <div><dt>Delivery</dt><dd class="free">Free</dd></div>
+          <div class="grand"><dt>Total</dt><dd id="total"></dd></div>
+        </dl>
+      </aside>
+    </div>
+  </div>
+
+  <section class="done" aria-live="polite">
+    <div class="tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <h1 class="disp" id="dTitle">Order placed</h1>
+    <div class="num" id="dNum"></div>
+    <p id="dMsg"></p>
+    <div class="panel"><ul class="lines" id="dLines"></ul><dl class="tot"><div class="grand"><dt>Total (cash on delivery)</dt><dd id="dTotal"></dd></div></dl></div>
+    <a class="shop" href="/">Back to Sober</a>
+  </section>
+</main>
+
+<script>
+(() => {
+  // Display data only; the server re-prices every order.
+  const SW = 2688, SH = 1520;
+  const FL = [
+    { name: 'Mojito', col: '#9ac499', can: [78, 37, 410, 990] },
+    { name: 'Spritz', col: '#f29a63', can: [611, 37, 410, 990] },
+    { name: 'Paloma', col: '#ed8484', can: [1145, 37, 410, 990] },
+    { name: 'Ginger Mule', col: '#eabd4a', can: [1675, 37, 410, 990] },
+    { name: 'Berry Sangria', col: '#bd92c4', can: [2208, 37, 410, 990] },
+  ];
+  const PRICE = { case: 240, caseCans: 12, pack: 50 };
+  const GOV = ['Cairo', 'Giza', 'Alexandria', 'Qalyubia', 'Sharqia', 'Dakahlia', 'Gharbia', 'Monufia', 'Beheira', 'Kafr El Sheikh', 'Damietta', 'Port Said', 'Ismailia', 'Suez', 'North Sinai', 'South Sinai', 'Red Sea', 'Matrouh', 'Faiyum', 'Beni Suef', 'Minya', 'Asyut', 'Sohag', 'Qena', 'Luxor', 'Aswan', 'New Valley'];
+  const CART_KEY = 'sober-cart-v1', FORM_KEY = 'sober-checkout-details';
+  const $ = s => document.querySelector(s);
+  const egp = n => n.toLocaleString('en-US') + ' EGP';
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function loadCart() {
+    try {
+      const c = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+      if (!Array.isArray(c)) return [];
+      const ok = f => Number.isInteger(f) && f >= 0 && f < FL.length;
+      return c.filter(l => l && Number.isInteger(l.qty) && l.qty > 0 &&
+        ((l.type === 'case' && ok(l.flavour)) || (l.type === 'pack' && Array.isArray(l.flavours) && l.flavours.length === 3 && l.flavours.every(ok))));
+    } catch (_) { return []; }
+  }
+  function saveCart(c) { try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch (_) {} }
+  let cart = loadCart();
+
+  function sprite(box, pad = 4) {
+    const x = box[0] - pad, y = box[1] - pad, w = box[2] + 2 * pad, h = box[3] + 2 * pad;
+    return `background-size:${SW / w * 100}% ${SH / h * 100}%;background-position:${x / (SW - w) * 100}% ${y / (SH - h) * 100}%`;
+  }
+  const info = l => l.type === 'case'
+    ? { name: `Case of ${PRICE.caseCans}`, desc: FL[l.flavour].name, unit: PRICE.case, fl: [l.flavour] }
+    : { name: '3 pack', desc: l.flavours.map(f => FL[f].name).join(', '), unit: PRICE.pack, fl: l.flavours };
+  function thumb(l) {
+    const i = info(l);
+    const bg = l.type === 'case' ? FL[l.flavour].col : `linear-gradient(90deg,${i.fl.map((f, k) => `${FL[f].col} ${k * 33.4}% ${(k + 1) * 33.3}%`).join(',')})`;
+    return `<div class="thumb ${l.type}" style="background:${bg}">${i.fl.map(f => `<span class="c spr" style="${sprite(FL[f].can)}"></span>`).join('')}${l.type === 'case' ? `<span class="x12">×${PRICE.caseCans}</span>` : ''}</div>`;
+  }
+  const subtotal = c => c.reduce((n, l) => n + info(l).unit * l.qty, 0);
+
+  function render() {
+    const lines = $('#lines');
+    lines.innerHTML = cart.map((l, idx) => {
+      const i = info(l);
+      return `<li class="line">${thumb(l)}<div class="lt"><p class="n">${i.name}</p><p class="d">${esc(i.desc)}</p><p class="u">${egp(i.unit)} each</p></div>
+        <div class="lr"><span class="p">${egp(i.unit * l.qty)}</span>
+          <span class="qty"><button type="button" data-a="dec" data-i="${idx}" aria-label="One less ${i.name}">−</button><span aria-label="Quantity">${l.qty}</span><button type="button" data-a="inc" data-i="${idx}" aria-label="One more ${i.name}">+</button></span>
+          <button type="button" class="rm" data-a="rm" data-i="${idx}">Remove</button></div></li>`;
+    }).join('');
+    const empty = cart.length === 0, sub = subtotal(cart);
+    $('#empty').hidden = !empty;
+    $('#tot').hidden = empty;
+    $('#sub').textContent = egp(sub);
+    $('#total').textContent = egp(sub);
+    $('#placeTotal').textContent = empty ? '' : egp(sub);
+    $('#place').disabled = empty;
+  }
+  $('#lines').addEventListener('click', e => {
+    const b = e.target.closest('button[data-a]'); if (!b) return;
+    const i = +b.dataset.i, l = cart[i]; if (!l) return;
+    if (b.dataset.a === 'inc') l.qty = Math.min(50, l.qty + 1);
+    if (b.dataset.a === 'dec') l.qty = Math.max(1, l.qty - 1);
+    if (b.dataset.a === 'rm') cart.splice(i, 1);
+    saveCart(cart); render();
+  });
+  addEventListener('storage', e => { if (e.key === CART_KEY) { cart = loadCart(); render(); } });
+
+  // form
+  const sel = $('#governorate');
+  GOV.forEach(g => sel.add(new Option(g, g)));
+  const form = $('#form'), FIELDS = ['name', 'phone', 'email', 'governorate', 'city', 'address', 'notes'];
+  try { const saved = JSON.parse(localStorage.getItem(FORM_KEY) || '{}'); FIELDS.forEach(k => { if (saved[k] && k !== 'notes') form.elements[k].value = saved[k]; }); } catch (_) {}
+
+  function normPhone(raw) {
+    let p = String(raw || '').replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660)).replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06F0)).replace(/[^\d+]/g, '');
+    if (p.startsWith('+20')) p = '0' + p.slice(3); else if (p.startsWith('0020')) p = '0' + p.slice(4); else if (p.startsWith('20') && p.length === 12) p = '0' + p.slice(2);
+    return /^01[0125]\d{8}$/.test(p) ? p : null;
+  }
+  function check() {
+    const v = k => form.elements[k].value.trim(), e = {};
+    if (v('name').length < 2) e.name = 'Please enter your full name.';
+    if (!normPhone(v('phone'))) e.phone = 'Please enter a valid Egyptian mobile number (e.g. 010 1234 5678).';
+    if (v('email') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('email'))) e.email = 'Please enter a valid email, or leave it empty.';
+    if (!GOV.includes(v('governorate'))) e.governorate = 'Please choose your governorate.';
+    if (v('city').length < 2) e.city = 'Please enter your city or area.';
+    if (v('address').length < 5) e.address = 'Please enter your street address.';
+    return e;
+  }
+  function showErrors(e) {
+    document.querySelectorAll('.f[data-f]').forEach(f => {
+      const m = e[f.dataset.f] || ''; f.classList.toggle('bad', !!m); f.querySelector('.er').textContent = m;
+      const inp = f.querySelector('input,select,textarea'); if (inp) inp.setAttribute('aria-invalid', m ? 'true' : 'false');
+    });
+  }
+  form.addEventListener('input', e => {
+    const f = e.target.closest('.f[data-f]');
+    if (f && f.classList.contains('bad')) { const m = check()[f.dataset.f]; if (!m) { f.classList.remove('bad'); f.querySelector('.er').textContent = ''; } }
+  });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    $('#ferr').textContent = '';
+    if (!cart.length) return;
+    const errs = check(); showErrors(errs);
+    const first = Object.keys(errs)[0];
+    if (first) { form.elements[first].focus(); return; }
+    const customer = {}; FIELDS.forEach(k => customer[k] = form.elements[k].value.trim());
+    try { const { notes, ...keep } = customer; localStorage.setItem(FORM_KEY, JSON.stringify(keep)); } catch (_) {}
+    const btn = $('#place'); btn.disabled = true; btn.querySelector('.pl').textContent = 'Placing order…';
+    try {
+      const r = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customer, items: cart.map(l => l.type === 'case' ? { type: 'case', flavour: l.flavour, qty: l.qty } : { type: 'pack', flavours: l.flavours, qty: l.qty }), website: form.elements.website.value }) });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        if (data.fields) { showErrors(data.fields); const k = Object.keys(data.fields)[0]; if (k) form.elements[k].focus(); }
+        throw new Error(data.error || 'We couldn’t place your order. Please try again.');
+      }
+      confirmOrder(data.order, customer);
+    } catch (err) {
+      $('#ferr').textContent = err.message === 'Failed to fetch' ? 'No connection. Check your internet and try again.' : err.message;
+      btn.disabled = false; btn.querySelector('.pl').textContent = 'Place order';
+    }
+  });
+
+  function confirmOrder(order, customer) {
+    $('#dTitle').textContent = `Thanks, ${customer.name.split(' ')[0]}!`;
+    $('#dNum').textContent = `Order ${order.number}`;
+    $('#dMsg').textContent = `We'll call ${customer.phone} to confirm, then deliver to ${customer.city}, ${customer.governorate}. Pay ${egp(order.total)} in cash when it arrives.`;
+    $('#dLines').innerHTML = (order.items || []).map(l => {
+      const line = l.type === 'case' ? { type: 'case', flavour: l.flavours[0], qty: l.qty } : { type: 'pack', flavours: l.flavours, qty: l.qty };
+      return `<li class="line">${thumb(line)}<div class="lt"><p class="n">${esc(l.label)}</p><p class="u">${l.qty} × ${egp(l.unit)}</p></div><div class="lr"><span class="p">${egp(l.total)}</span></div></li>`;
+    }).join('');
+    $('#dTotal').textContent = egp(order.total);
+    cart = []; saveCart(cart);
+    document.body.classList.add('ok');
+    scrollTo({ top: 0 });
+    document.title = `Order ${order.number} · Sober`;
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

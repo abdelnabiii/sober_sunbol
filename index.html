@@ -138,6 +138,11 @@ a{color:inherit;text-decoration:none}
 .card .nm{position:absolute;left:0;right:0;top:calc(26 * var(--w));margin:0;text-align:center;font-size:calc(30.5 * var(--w));color:#fbf7f2;transform:translateZ(10px)}
 .pk{position:absolute;left:50%;top:calc(104 * var(--w));width:calc(107 * var(--w));height:calc(255 * var(--w));transform:translateX(-50%) translateZ(30px);transform-origin:50% 100%;filter:drop-shadow(0 calc(9 * var(--w)) calc(12 * var(--w)) rgba(30,20,30,.28));cursor:pointer}
 .gl .card.live .pk{visibility:hidden}
+.card .cp{position:absolute;left:calc(18 * var(--w));bottom:calc(17 * var(--w));margin:0;color:#fbf7f2;font:400 max(10.5px,calc(12.5 * var(--w)))/1.3 'DM Mono',monospace;letter-spacing:.04em;transform:translateZ(20px)}
+.card .cp b{font-weight:500;font-size:1.18em}
+#toast{position:fixed;z-index:80;right:16px;top:calc(94 * var(--n) + 8px);display:flex;align-items:center;gap:14px;padding:10px 12px 10px 16px;border-radius:14px;background:var(--ink);color:var(--cream);font:500 13px Inter,sans-serif;box-shadow:0 10px 30px rgba(20,14,24,.25);opacity:0;translate:0 -8px;pointer-events:none;transition:opacity .3s,translate .3s var(--ease)}
+#toast.on{opacity:1;translate:0 0;pointer-events:auto}
+#toast a{padding:7px 12px;border-radius:99px;background:var(--cream);color:var(--ink);font-weight:700;white-space:nowrap}
 .add{position:absolute;right:calc(16 * var(--w));bottom:calc(15 * var(--w));width:max(34px,calc(44 * var(--w)));height:max(34px,calc(44 * var(--w)));border-radius:50%;background:var(--ink);border:2px solid #fff;color:#fff;display:grid;place-items:center;transform:translateZ(40px);transition:scale .2s var(--ease)}
 .add svg{width:42%;height:42%}
 .add:hover{scale:1.1}
@@ -233,6 +238,8 @@ a{color:inherit;text-decoration:none}
   .card .nm{top:22px;font-size:clamp(22px,7vw,30px)}
   .pk{top:28%;width:27%;height:60%;filter:drop-shadow(0 8px 10px rgba(30,20,30,.28))}
   .add{width:44px;height:44px;right:14px;bottom:14px}
+  .card .cp{left:16px;bottom:16px;font-size:12px}
+  #toast{top:72px;left:16px;right:16px;justify-content:space-between}
 
   #range{padding:92px max(18px,calc((100vw - 600px) / 2)) 120px;--pt:92px}
   .b-h{font-size:clamp(40px,7vw,64px)}
@@ -303,6 +310,8 @@ a{color:inherit;text-decoration:none}
     <a class="dibs" href="#range">First dibs</a>
   </div>
 </nav>
+
+<div id="toast" role="status" aria-live="polite"><span class="tt"></span><a href="/checkout">Checkout →</a></div>
 
 <div id="intro">
   <video id="iv" muted playsinline preload="auto" src="https://d8j0ntlcm91z4.cloudfront.net/user_3GuPJgHdO30A861GfajrdQdZhaa/hf_20261117_073158_a5abd813-3f4f-409a-aaa6-e094f401ef37.mp4"></video>
@@ -791,7 +800,7 @@ function stepStorm(q) {
 const cardEls = FL.map((f, i) => {
   const c = document.createElement('article');
   c.className = 'card'; c.style.setProperty('--c', f.col); c.style.setProperty('--d', i * 80 + 'ms'); c.dataset.i = i;
-  c.innerHTML = `<h3 class="nm disp">${f.name.toUpperCase().split(' ').join('<br>')}</h3><div class="pk spr" role="img" aria-label="${f.name} can"></div><button class="add" type="button" aria-label="Add a case of ${f.name} to the cart"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 2.5v11M2.5 8h11"/></svg></button>`;
+  c.innerHTML = `<h3 class="nm disp">${f.name.toUpperCase().split(' ').join('<br>')}</h3><div class="pk spr" role="img" aria-label="${f.name} can"></div><p class="cp">12 cans<br><b>240 EGP</b></p><button class="add" type="button" aria-label="Add a case of ${f.name} to the cart"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 2.5v11M2.5 8h11"/></svg></button>`;
   const pk = c.querySelector('.pk'); sprite(pk, f.can, 4); c._pk = pk; c._x = 0; c._y = 0; c._press = false;
   const apply = () => {
     const hover = c._hover;
@@ -810,7 +819,7 @@ const cardEls = FL.map((f, i) => {
     if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
     poke(i);
   });
-  c.querySelector('.add').addEventListener('click', () => fly([pk], () => addCart(1)));
+  c.querySelector('.add').addEventListener('click', () => fly([pk], () => addLine({ type: 'case', flavour: i }, `Case of ${f.name}`)));
   cardsEl.append(c);
   return c;
 });
@@ -830,15 +839,36 @@ function poke(i) {
 }
 
 /* ================= cart & fly ================= */
-let cart = 0;
-function addCart(n) {
-  cart += n;
-  badge.textContent = cart;
-  basket.setAttribute('aria-label', `Cart, ${cart} item${cart === 1 ? '' : 's'}`);
+// Cart lives in localStorage (shared with /checkout). Prices are only shown here; the server prices orders.
+const CART_KEY = 'sober-cart-v1';
+const PRICE = { case: 240, caseCans: 12, pack: 50 };
+function loadCart() { try { const c = JSON.parse(localStorage.getItem(CART_KEY) || '[]'); return Array.isArray(c) ? c : []; } catch (_) { return []; } }
+function saveCart(c) { try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch (_) {} }
+const lineKey = l => l.type === 'case' ? 'case:' + l.flavour : 'pack:' + [...l.flavours].sort().join(',');
+const cartCount = c => c.reduce((n, l) => n + (l.qty || 0), 0);
+function setBadge(n, animate) {
+  badge.textContent = n;
+  basket.setAttribute('aria-label', n ? `Cart, ${n} item${n === 1 ? '' : 's'}. Go to checkout` : 'Cart is empty. Go to checkout');
   const first = !badge.classList.contains('has');
-  badge.classList.add('has');
-  if (!RM) badge.animate(first ? [{ scale: 0 }, { scale: 1.5, offset: .5 }, { scale: 1 }] : [{ scale: 1.5 }, { scale: 1 }], { duration: 350, easing: 'cubic-bezier(.3,1.5,.5,1)' });
+  badge.classList.toggle('has', n > 0);
+  if (animate && n > 0 && !RM) badge.animate(first ? [{ scale: 0 }, { scale: 1.5, offset: .5 }, { scale: 1 }] : [{ scale: 1.5 }, { scale: 1 }], { duration: 350, easing: 'cubic-bezier(.3,1.5,.5,1)' });
 }
+function addLine(line, label) {
+  const c = loadCart(), k = lineKey(line), ex = c.find(l => lineKey(l) === k);
+  if (ex) ex.qty = Math.min(50, (ex.qty || 0) + 1); else c.push({ ...line, qty: 1 });
+  saveCart(c); setBadge(cartCount(c), true); toast(label);
+}
+const toastEl = $('#toast');
+let toastT = 0;
+function toast(label) {
+  toastEl.querySelector('.tt').textContent = label + ' added';
+  toastEl.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), 4200);
+}
+basket.addEventListener('click', () => { location.href = '/checkout'; });
+setBadge(cartCount(loadCart()), false);
+addEventListener('storage', e => { if (e.key === CART_KEY) setBadge(cartCount(loadCart()), false); });
+addEventListener('pageshow', () => setBadge(cartCount(loadCart()), false));
 function bump() { if (!RM) basket.animate([{ scale: 1 }, { scale: 1.18 }, { scale: 1 }], { duration: 320, easing: 'ease-out' }); }
 function fly(srcs, done) {
   if (RM || !srcs.length) { done(); return; }
@@ -915,7 +945,8 @@ function addToPack(f) {
 buy.addEventListener('click', () => {
   if (pack.includes(null) || buyBusy) return;
   packTouched = true; buyBusy = true;
-  fly(slotEls.map(s => s._sc), () => addCart(1));
+  const chosen = [...pack];
+  fly(slotEls.map(s => s._sc), () => addLine({ type: 'pack', flavours: chosen }, '3 pack'));
   setTimeout(() => {
     pack.fill(null); renderPack();
     buy.disabled = false; buy.classList.add('done'); buyL.textContent = 'Added to cart';
