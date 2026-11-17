@@ -173,8 +173,9 @@ a{color:inherit;text-decoration:none}
 
 /* ---------- desktop short ---------- */
 @media (min-width:820px) and (max-height:560px){
-  #count{top:72px;right:24px;font-size:52px}
-  #auto{top:136px;right:26px}
+  /* short wide screens: counter and Autoplay sit in the bottom corners, clear of the arc */
+  #count{top:auto;bottom:10px;right:24px;font-size:52px}
+  #auto{top:auto;bottom:24px;right:auto;left:26px}
 }
 
 /* ---------- phone ---------- */
@@ -196,6 +197,7 @@ a{color:inherit;text-decoration:none}
   #title{top:auto;bottom:calc(120px + env(safe-area-inset-bottom));padding:0 18px;font-size:var(--ts,clamp(40px,12.5vw,64px))}
   #count{top:76px;right:14px;font-size:56px}
   #auto{top:142px;right:16px}
+  @media (max-height:699.98px){#auto{top:78px;right:auto;left:16px}}
   #play{width:48px;height:48px;top:auto;bottom:calc(120px + env(safe-area-inset-bottom) + var(--th,64px) + 18px);translate:-50% 0}
   #play:hover{scale:1}
   .rings{width:1500px;height:1500px;background:repeating-radial-gradient(circle,rgba(255,255,255,.13) 0,rgba(255,255,255,.02) 30px,rgba(255,255,255,.13) 60px)}
@@ -247,7 +249,11 @@ a{color:inherit;text-decoration:none}
 @media (max-height:500px) and (orientation:landscape) and (pointer:coarse){
   #title{top:auto;bottom:12px;font-size:var(--ts,36px)}
   #play{top:auto;bottom:62px;translate:-50% 0}
-  #count{font-size:40px}
+  #count{top:auto;bottom:8px;right:16px;font-size:40px}
+  #auto{top:auto;bottom:20px;right:auto;left:16px}
+  /* landscape phones have the width for the tabs in the top bar; a bottom bar would cover the title */
+  .pill{position:absolute;top:50%;bottom:auto;translate:-50% -50%;background:rgba(255,255,255,.08)}
+  #nav.light .pill{background:rgba(255,255,255,.35)}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
@@ -485,7 +491,6 @@ function swapTitle(name, dir, animateOld = true) {
   setTitleSize(name);
   const L = buildLayer(name);
   titleEl.append(L);
-  hero.style.setProperty('--th', L.offsetHeight + 'px');
   if (RM) { $$('#title .tl').forEach(t => t !== L && t.remove()); return; }
   if (old) {
     old.classList.add('old');
@@ -511,11 +516,31 @@ function softSwap(el, apply, o = {}) {
 const pad2 = i => String(i + 1).padStart(2, '0');
 
 /* ================= flavour change ================= */
-function heroArcCentre() {
+let arcM = null;
+function measureArc() {
   const H = hero.clientHeight, W = hero.clientWidth;
-  if (isPhone()) return { cx: W / 2, cy: H * .4, u: Math.min(vw / 560, H / 980), spread: 1.02 };
-  const u = Math.min(vw / 1440, H / 900);
-  return { cx: W / 2, cy: H / 2 - 78 * u, u, spread: 1 };
+  if (isPhone()) {
+    // keep the whole centre can (plus its float) between the nav and the next button
+    // on short portrait phones the counter/Autoplay row occupies 76–132px: start the can below it
+    const lo = H < 700 && !LAND.matches ? 140 : 72, hi = playBtn.offsetTop - 12;
+    const u = Math.max(.2, Math.min(vw / 560, H / 980, (hi - lo) / 439));
+    const cy = clamp(H * .4, lo + 224 * u, Math.max(lo + 224 * u, hi - 215 * u));
+    arcM = { cx: W / 2, cy, u, spread: 1.02 };
+  } else {
+    const u = Math.min(vw / 1440, H / 900);
+    arcM = { cx: W / 2, cy: H / 2 - 78 * u, u, spread: 1 };
+  }
+}
+function heroArcCentre() { if (!arcM) measureArc(); return arcM; }
+function measureTitleHeight() {
+  // reserve the tallest of the five names so the controls never jump between one- and two-line names
+  let max = 0;
+  for (const f of FL) {
+    const L = buildLayer(f.name);
+    L.style.cssText = `position:absolute;left:0;right:0;top:0;visibility:hidden;font-size:${titleSize(f.name)}px`;
+    titleEl.append(L); max = Math.max(max, L.offsetHeight); L.remove();
+  }
+  hero.style.setProperty('--th', max + 'px');
 }
 function startReveal(col) {
   finishReveal();
@@ -579,6 +604,7 @@ function arcState(k, j, A) {
 }
 
 /* ================= hero: interaction ================= */
+autoBtn.setAttribute('aria-pressed', autoOn);
 playBtn.addEventListener('click', () => { interact(); goTo(target + 1); });
 autoBtn.addEventListener('click', () => { autoOn = !autoOn; autoBtn.setAttribute('aria-pressed', autoOn); interact(); });
 addEventListener('keydown', e => {
@@ -921,6 +947,7 @@ const camera = new THREE.PerspectiveCamera(30, 1, 10, 1000);
 function bentGeo(back) {
   const g = new THREE.PlaneGeometry(1, BH, 30, 64);
   const p = g.attributes.position, uv = g.attributes.uv;
+  const sinT = new Float32Array(p.count), row = new Uint8Array(p.count), uvV = new Float32Array(p.count);
   for (let i = 0; i < p.count; i++) {
     const u = uv.getX(i), v = uv.getY(i), th = (u - .5) * Math.PI, t = 1 - v;
     let r = RAD;
@@ -928,12 +955,25 @@ function bentGeo(back) {
     else if (t > .945) r = RAD * (1 - .16 * ss(.945, 1, t));
     const x = r * Math.sin(th), z = r * Math.cos(th);
     p.setXYZ(i, x, p.getY(i), back ? -z : z);
-    // the art is opaque only between ~1.5% and ~97.7% of the padded crop: keep the seam inside it
-    const uf = clamp(.5 + x, .026, .966);
+    sinT[i] = Math.sin(th); row[i] = Math.round(t * 64); uvV[i] = v;
+    const uf = clamp(.5 + x, .026, .966); // provisional; fitSeams() replaces it once the art is loaded
     uv.setX(i, back ? 1 - uf : uf);
   }
+  g.userData = { sinT, row, back };
   if (back) { const ix = g.index.array; for (let i = 0; i < ix.length; i += 3) { const t = ix[i + 1]; ix[i + 1] = ix[i + 2]; ix[i + 2] = t; } g.index.needsUpdate = true; }
-  g.computeVertexNormals();
+  // analytic normals of the true surface of revolution: both halves agree exactly at the seam,
+  // so there is no lighting line where front and back meet
+  const rad = t => t < .085 ? RAD * (.89 + .11 * ss(.03, .085, t)) : t > .945 ? RAD * (1 - .16 * ss(.945, 1, t)) : RAD;
+  const n = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++) {
+    const t = 1 - uvV[i], e = .002;
+    const drdt = (rad(Math.min(1, t + e)) - rad(Math.max(0, t - e))) / (Math.min(1, t + e) - Math.max(0, t - e));
+    const ny = drdt / BH; // y = (0.5 - t)·BH, so dr/dy = -drdt/BH and the outward normal's y is -dr/dy
+    const nx = sinT[i], nz = (back ? -1 : 1) * Math.cos(Math.asin(clamp(sinT[i], -1, 1)));
+    const l = Math.hypot(nx, ny, nz);
+    n[i * 3] = nx / l; n[i * 3 + 1] = ny / l; n[i * 3 + 2] = nz / l;
+  }
+  g.setAttribute('normal', new THREE.BufferAttribute(n, 3));
   return g;
 }
 const geoF = bentGeo(false), geoB = bentGeo(true);
@@ -1006,13 +1046,38 @@ function backCanvas(img, f) {
   g.save(); g.translate(W, 0); g.scale(-1, 1);
   g.drawImage(img, (x - 4) * s, (y - 4) * s, (w + 8) * s, (h + 8) * s, 0, 0, W, H);
   g.restore();
-  g.globalCompositeOperation = 'source-atop';
   const rimH = H * .025, baseH = H * .035, bodyY = rimH, bodyH = H - rimH - baseH;
-  g.fillStyle = rgba(F.col, .9); g.fillRect(0, bodyY, W, bodyH);
-  g.fillStyle = rgba(F.col, .35); g.fillRect(0, 0, W, rimH); g.fillRect(0, H - baseH, W, baseH);
-  const sh = g.createLinearGradient(0, 0, W, 0);
+  g.globalCompositeOperation = 'source-atop';
+  // Seam bands: the mesh shows this canvas only between the seams fitSeams() found. On each row, repeat
+  // the art's exact seam-column colour across a narrow band, so the back meets the front on identical
+  // pixels (no step, no mirrored art ghosting near the edges).
+  const band = .07 * W;
+  let xlB = .04 * W, xrB = .96 * W;
+  if (SEAM) {
+    const src = document.createElement('canvas'); src.width = W; src.height = H;
+    src.getContext('2d').drawImage(c, 0, 0);
+    for (let y = 0; y < H; y++) {
+      const r = Math.round(y / (H - 1) * 64);
+      const xl = (1 - SEAM.R[r]) * W, xr = (1 - SEAM.L[r]) * W;
+      g.drawImage(src, Math.min(W - 1, Math.round(xl) + 1), y, 1, 1, 0, y, xl + band, 1);
+      g.drawImage(src, Math.max(0, Math.round(xr) - 2), y, 1, 1, xr - band, y, W - (xr - band), 1);
+    }
+    xlB = (1 - SEAM.R[32]) * W; xrB = (1 - SEAM.L[32]) * W;
+  }
+  // flavour colour + sheen on their own layer, faded in from the seam bands
+  const lay = document.createElement('canvas'); lay.width = W; lay.height = H;
+  const lg = lay.getContext('2d');
+  lg.fillStyle = F.col; lg.fillRect(0, bodyY, W, bodyH);
+  lg.fillStyle = rgba(F.col, .35); lg.fillRect(0, 0, W, rimH); lg.fillRect(0, H - baseH, W, baseH);
+  const sh = lg.createLinearGradient(0, 0, W, 0);
   sh.addColorStop(0, 'rgba(0,0,0,.10)'); sh.addColorStop(.28, 'rgba(255,255,255,.14)'); sh.addColorStop(.5, 'rgba(255,255,255,0)'); sh.addColorStop(.8, 'rgba(0,0,0,.04)'); sh.addColorStop(1, 'rgba(0,0,0,.14)');
-  g.fillStyle = sh; g.fillRect(0, bodyY, W, bodyH);
+  lg.fillStyle = sh; lg.fillRect(0, bodyY, W, bodyH);
+  lg.globalCompositeOperation = 'destination-in';
+  const fe = lg.createLinearGradient(0, 0, W, 0);
+  fe.addColorStop(clamp((xlB + .006 * W) / W), 'rgba(0,0,0,0)'); fe.addColorStop(clamp((xlB + band) / W), '#000');
+  fe.addColorStop(clamp((xrB - band) / W), '#000'); fe.addColorStop(clamp((xrB - .006 * W) / W), 'rgba(0,0,0,0)');
+  lg.fillStyle = fe; lg.fillRect(0, 0, W, H);
+  g.drawImage(lay, 0, 0);
   const ink = mixHex(F.col, '#1c1a1f', .78);
   g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = ink;
   g.font = `400 ${.085 * W}px 'Archivo Black'`; g.fillText('SOBER', W / 2, H * .15);
@@ -1038,7 +1103,7 @@ function backCanvas(img, f) {
   g.font = `500 ${.038 * W}px 'DM Mono'`; g.fillText('INGREDIENTS', W / 2, H * .62);
   g.font = `400 ${.034 * W}px 'DM Mono'`;
   const words = F.ing.split(' '), lines = []; let line = '';
-  for (const wd of words) { const t = line ? line + ' ' + wd : wd; if (g.measureText(t).width > W * .7 && line) { lines.push(line); line = wd; } else line = t; }
+  for (const wd of words) { const t = line ? line + ' ' + wd : wd; if (g.measureText(t).width > W * .64 && line) { lines.push(line); line = wd; } else line = t; }
   if (line) lines.push(line);
   lines.forEach((l, i) => g.fillText(l, W / 2, H * (.645 + i * .022)));
   // barcode
@@ -1052,10 +1117,49 @@ function backCanvas(img, f) {
   g.fillStyle = ink; g.font = `500 ${.04 * W}px 'DM Mono'`; g.fillText('ALL FIZZ, NO BOOZE', W / 2, H * .885);
   return c;
 }
+// Map every row of the mesh onto the art's real opaque width on that row, so the front/back seam
+// lands exactly on the can's painted edge: no transparent notches at the neck or base, no smeared band.
+let SEAM = null;
+function fitSeams(cvs) {
+  const W = cvs[0].width, H = cvs[0].height;
+  const data = cvs.map(c => c.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, W, H).data);
+  const L = new Array(65).fill(null), Rr = new Array(65).fill(null);
+  for (let i = 0; i <= 64; i++) {
+    const y = Math.round(i / 64 * (H - 1));
+    let lo = 0, hi = 1, ok = true;
+    for (const d of data) {
+      let a = -1, b = -1;
+      for (let dy = -1; dy <= 1; dy++) {
+        const yy = clamp(y + dy, 0, H - 1);
+        for (let x = 0; x < W; x++) if (d[(yy * W + x) * 4 + 3] > 200) { if (a < 0 || x < a) a = x; break; }
+        for (let x = W - 1; x >= 0; x--) if (d[(yy * W + x) * 4 + 3] > 200) { if (x > b) b = x; break; }
+      }
+      if (a < 0 || b - a < W * .3) { ok = false; break; }
+      // sit ~2% inside the painted outline: the photo's edge highlight would otherwise be stretched into a stripe side-on
+      lo = Math.max(lo, a / W + .02); hi = Math.min(hi, b / W - .02);
+    }
+    if (ok) { L[i] = lo; Rr[i] = hi; }
+  }
+  for (let i = 0; i <= 64; i++) if (L[i] == null) {
+    let k = 1; while (L[i - k] == null && L[i + k] == null && k < 64) k++;
+    const j = L[i + k] != null ? i + k : i - k; L[i] = L[j]; Rr[i] = Rr[j];
+  }
+  SEAM = { L, R: Rr };
+  for (const g of [geoF, geoB]) {
+    const { sinT, row, back } = g.userData, uv = g.attributes.uv;
+    for (let i = 0; i < uv.count; i++) {
+      const r = row[i], mid = (L[r] + Rr[r]) / 2, half = (Rr[r] - L[r]) / 2, u = mid + sinT[i] * half;
+      uv.setX(i, back ? 1 - u : u);
+    }
+    uv.needsUpdate = true;
+  }
+}
 function toTex(c) { const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; }
 const img = new Image(); img.crossOrigin = 'anonymous';
 img.onload = async () => {
-  FL.forEach((_, f) => texF[f] = toTex(frontCanvas(img, f)));
+  const fronts = FL.map((_, f) => frontCanvas(img, f));
+  try { fitSeams(fronts); } catch (_) {}
+  fronts.forEach((c, f) => texF[f] = toTex(c));
   glReady = true;
   try {
     await Promise.all([document.fonts.load("400 40px 'Archivo Black'"), document.fonts.load("400 20px 'DM Mono'"), document.fonts.load("500 20px 'DM Mono'"), document.fonts.load('700 20px Inter')]);
@@ -1081,7 +1185,8 @@ function resize() {
   inBack.style.setProperty('--k', k); inFrontFrame.style.setProperty('--k', k);
   bitEls.forEach(b => b.style.setProperty('--bm', isPhone() ? 1.3 : 1));
   setTitleSize(FL[shownFlav].name);
-  const tl = titleEl.querySelector('.tl:not(.old)'); if (tl) hero.style.setProperty('--th', tl.offsetHeight + 'px');
+  measureTitleHeight();
+  measureArc();
   placeHL();
 }
 addEventListener('resize', resize);
