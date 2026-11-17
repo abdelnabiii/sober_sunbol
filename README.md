@@ -14,6 +14,7 @@ The centrepiece is one real-time 3D can (Three.js 0.160 / WebGL). The can you pi
 | `checkout.html`, `admin.html` | Checkout (`/checkout`) and order tracking (`/admin`), built the same way from `src/`. |
 | `api/orders.js` | Serverless API: place orders (public), list and update orders (admin). |
 | `api/_lib/shop.js` | Catalogue, prices (EGP), governorates and validation. The server prices every order from here. |
+| `media/intro-portrait.mp4`, `media/intro-720.mp4` | Light phone/tablet re-encodes of the intro clip (≈0.7 MB each, from the 8.4 MB master). Upright phones get a centre crop, other small screens get 720p, desktops stream the original. Cached as immutable, so give a changed file a new name. |
 | `build.py` | Inlines the fonts into every page in `src/`. |
 
 ## Orders backend

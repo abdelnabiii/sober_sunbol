@@ -314,7 +314,19 @@ a{color:inherit;text-decoration:none}
 <div id="toast" role="status" aria-live="polite"><span class="tt"></span><a href="/checkout">Checkout →</a></div>
 
 <div id="intro">
-  <video id="iv" muted playsinline webkit-playsinline autoplay preload="auto" disablepictureinpicture disableremoteplayback src="https://d8j0ntlcm91z4.cloudfront.net/user_3GuPJgHdO30A861GfajrdQdZhaa/hf_20261117_073158_a5abd813-3f4f-409a-aaa6-e094f401ef37.mp4#t=0.55"></video>
+  <video id="iv" muted playsinline webkit-playsinline autoplay preload="auto" disablepictureinpicture disableremoteplayback></video>
+  <script>
+  // Pick the intro file before anything downloads: phones get light re-encodes (≈0.7 MB) served from this
+  // site, desktops get the original 14 Mbps master. #t=0.55 starts playback at 0.55 s.
+  (function () {
+    var v = document.getElementById('iv'), w = innerWidth, h = innerHeight, c = navigator.connection || {};
+    var slow = c.saveData || /(^|-)(2g|3g)$/.test(c.effectiveType || '');
+    var src = w / h <= .62 && w <= 640 ? '/media/intro-portrait.mp4'
+      : (Math.max(w, h) <= 1366 || slow) ? '/media/intro-720.mp4'
+      : 'https://d8j0ntlcm91z4.cloudfront.net/user_3GuPJgHdO30A861GfajrdQdZhaa/hf_20261117_073158_a5abd813-3f4f-409a-aaa6-e094f401ef37.mp4';
+    v.src = src + '#t=0.55';
+  })();
+  </script>
   <button id="skip" type="button">Skip intro</button>
   <div class="stamp" aria-hidden="true">
     <svg class="mark" viewBox="0 0 36 36"><circle class="m1" cx="18" cy="18" r="18"/><circle class="m2" cx="14" cy="21.5" r="5"/><circle class="m2" cx="22.5" cy="13" r="3.4"/><circle class="m2" cx="24" cy="23.5" r="2.2"/></svg>
